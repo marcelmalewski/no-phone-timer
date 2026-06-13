@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -67,6 +68,10 @@ fun NoPhoneTimerScreen() {
         mutableLongStateOf(0L)
     }
 
+    var history by remember {
+        mutableStateOf<List<DayStat>>(emptyList())
+    }
+
     LaunchedEffect(Unit) {
 
         while (true) {
@@ -76,6 +81,10 @@ fun NoPhoneTimerScreen() {
             )
 
             todayTotal = StatsRepository.getToday(
+                context
+            )
+
+            history = StatsRepository.getLast7Days(
                 context
             )
 
@@ -193,6 +202,55 @@ fun NoPhoneTimerScreen() {
             }
 
             Spacer(
+                modifier = Modifier.height(20.dp)
+            )
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(28.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = CardColor
+                )
+            ) {
+
+                Column(
+                    modifier = Modifier.padding(28.dp)
+                ) {
+
+                    Text(
+                        text = "Last 7 Days", color = AccentColor, fontSize = 14.sp
+                    )
+
+                    Spacer(
+                        modifier = Modifier.height(20.dp)
+                    )
+
+                    history.forEach { day ->
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+
+                            Text(
+                                text = day.dayName, color = MediumEmphasisWhite
+                            )
+
+                            Text(
+                                text = formatShort(
+                                    day.durationMs
+                                ), color = HighEmphasisWhite
+                            )
+                        }
+
+                        Spacer(
+                            modifier = Modifier.height(8.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(
                 modifier = Modifier.weight(1f)
             )
         }
@@ -213,5 +271,19 @@ fun formatDuration(ms: Long): String {
         minutes > 0 -> "${minutes}m ${seconds}s"
 
         else -> "${seconds}s"
+    }
+}
+
+fun formatShort(ms: Long): String {
+
+    val totalMinutes = ms / 1000 / 60
+
+    val hours = totalMinutes / 60
+    val minutes = totalMinutes % 60
+
+    return when {
+        hours > 0 -> "${hours}h ${minutes}m"
+
+        else -> "${minutes}m"
     }
 }
