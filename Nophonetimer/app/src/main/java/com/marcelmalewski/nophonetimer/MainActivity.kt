@@ -1,6 +1,5 @@
 package com.marcelmalewski.nophonetimer
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -27,17 +26,15 @@ import androidx.compose.ui.unit.sp
 import com.marcelmalewski.nophonetimer.ui.theme.NoPhoneTimerTheme
 import kotlinx.coroutines.delay
 
-private val BackgroundColor = Color(0xFF121212)
-private val SecondaryBackground = Color(0xFF181818)
+private val BgColor = Color(0xFF121212)
+private val SecondaryBg = Color(0xFF181818)
 private val CardColor = Color(0xFF222222)
-
-private val AccentColor = Color(0xFFFFCC80)
+private val orange_200 = Color(0xFFFFCC80)
 
 private val HighEmphasisWhite = Color.White.copy(alpha = 0.87f)
 private val MediumEmphasisWhite = Color.White.copy(alpha = 0.60f)
 
 class MainActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -57,50 +54,23 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun NoPhoneTimerScreen() {
-
     val context = LocalContext.current
 
     var todayTotal by remember {
         mutableLongStateOf(0L)
     }
-
-    var currentStreak by remember {
-        mutableLongStateOf(0L)
-    }
-
     var history by remember {
         mutableStateOf<List<DayStat>>(emptyList())
     }
 
     LaunchedEffect(Unit) {
-
         while (true) {
-
-            val prefs = context.getSharedPreferences(
-                "no_phone_timer", Context.MODE_PRIVATE
-            )
-
             todayTotal = StatsRepository.getToday(
                 context
             )
-
             history = StatsRepository.getLast7Days(
                 context
             )
-
-            val lockTime = prefs.getLong(
-                "lock_time", 0
-            )
-
-            val isLocked = prefs.getBoolean(
-                "is_locked", false
-            )
-
-            currentStreak = if (isLocked && lockTime > 0) {
-                System.currentTimeMillis() - lockTime
-            } else {
-                0
-            }
 
             delay(1000)
         }
@@ -109,14 +79,14 @@ fun NoPhoneTimerScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(BgColor)
     ) {
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight(0.32f)
-                .background(SecondaryBackground)
+                .background(SecondaryBg)
         )
 
         Column(
@@ -130,11 +100,11 @@ fun NoPhoneTimerScreen() {
             )
 
             Text(
-                text = "No Phone", color = AccentColor, fontSize = 34.sp
+                text = "No Phone", color = orange_200, fontSize = 34.sp
             )
 
             Text(
-                text = "Timer", color = AccentColor, fontSize = 34.sp
+                text = "Timer", color = orange_200, fontSize = 34.sp
             )
 
             Spacer(
@@ -154,7 +124,7 @@ fun NoPhoneTimerScreen() {
                 ) {
 
                     Text(
-                        text = "Today", color = AccentColor, fontSize = 14.sp
+                        text = "Today", color = orange_200, fontSize = 14.sp
                     )
 
                     Spacer(
@@ -186,39 +156,7 @@ fun NoPhoneTimerScreen() {
                 ) {
 
                     Text(
-                        text = "Current Streak", color = AccentColor, fontSize = 14.sp
-                    )
-
-                    Spacer(
-                        modifier = Modifier.height(12.dp)
-                    )
-
-                    Text(
-                        text = formatDuration(currentStreak),
-                        color = HighEmphasisWhite,
-                        fontSize = 56.sp
-                    )
-                }
-            }
-
-            Spacer(
-                modifier = Modifier.height(20.dp)
-            )
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(28.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = CardColor
-                )
-            ) {
-
-                Column(
-                    modifier = Modifier.padding(28.dp)
-                ) {
-
-                    Text(
-                        text = "Last 7 Days", color = AccentColor, fontSize = 14.sp
+                        text = "Last 7 Days", color = orange_200, fontSize = 14.sp
                     )
 
                     Spacer(
