@@ -75,8 +75,8 @@ fun NoPhoneTimerScreen() {
                 "no_phone_timer", Context.MODE_PRIVATE
             )
 
-            todayTotal = prefs.getLong(
-                "today_total", 0
+            todayTotal = StatsRepository.getToday(
+                context
             )
 
             val lockTime = prefs.getLong(

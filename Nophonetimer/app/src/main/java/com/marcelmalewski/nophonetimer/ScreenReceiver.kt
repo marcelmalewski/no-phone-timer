@@ -40,13 +40,11 @@ class ScreenReceiver : BroadcastReceiver() {
 
                     val elapsed = System.currentTimeMillis() - lockTime
 
-                    val currentTotal = prefs.getLong(
-                        "today_total", 0
+                    StatsRepository.addSession(
+                        context, elapsed
                     )
 
-                    prefs.edit().putLong(
-                            "today_total", currentTotal + elapsed
-                        ).putBoolean(
+                    prefs.edit().putBoolean(
                             "is_locked", false
                         ).apply()
 
