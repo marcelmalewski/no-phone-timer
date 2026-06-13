@@ -49,13 +49,9 @@ class ScreenReceiver : BroadcastReceiver() {
                         ).apply()
 
                     Log.d(
-                        "NoPhoneTimer", "Added ${elapsed / 1000} seconds"
+                        "NoPhoneTimer", "Added ${elapsed / 1000}s"
                     )
                 }
-
-                Log.d(
-                    "NoPhoneTimer", "UNLOCKED"
-                )
             }
         }
     }

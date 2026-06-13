@@ -13,37 +13,28 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.marcelmalewski.nophonetimer.ui.theme.Background
+import com.marcelmalewski.nophonetimer.ui.theme.BackgroundSecondary
+import com.marcelmalewski.nophonetimer.ui.theme.TextPrimary
+import com.marcelmalewski.nophonetimer.ui.theme.TextSecondary
 import com.marcelmalewski.nophonetimer.ui.theme.NoPhoneTimerTheme
-import kotlinx.coroutines.delay
+import com.marcelmalewski.nophonetimer.ui.theme.Accent
 
-private val BgColor = Color(0xFF121212)
-private val SecondaryBg = Color(0xFF181818)
-private val CardColor = Color(0xFF222222)
-private val orange_200 = Color(0xFFFFCC80)
-
-private val HighEmphasisWhite = Color.White.copy(alpha = 0.87f)
-private val MediumEmphasisWhite = Color.White.copy(alpha = 0.60f)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         startService(
             Intent(this, TrackingService::class.java)
         )
 
         enableEdgeToEdge()
-
         setContent {
             NoPhoneTimerTheme {
                 NoPhoneTimerScreen()
@@ -55,56 +46,38 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun NoPhoneTimerScreen() {
     val context = LocalContext.current
-
-    var todayTotal by remember {
-        mutableLongStateOf(0L)
-    }
-    var history by remember {
-        mutableStateOf<List<DayStat>>(emptyList())
-    }
-
     LaunchedEffect(Unit) {
-        while (true) {
-            todayTotal = StatsRepository.getToday(
-                context
-            )
-            history = StatsRepository.getLast7Days(
-                context
-            )
-
-            delay(1000)
-        }
+        StatsRepository.initialize(
+            context
+        )
     }
 
+    val appState by StatsRepository.state.collectAsState()
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BgColor)
+            .background(Background)
     ) {
-
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight(0.32f)
-                .background(SecondaryBg)
+                .background(Background)
         )
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(24.dp)
         ) {
-
             Spacer(
                 modifier = Modifier.height(60.dp)
-            )
 
-            Text(
-                text = "No Phone", color = orange_200, fontSize = 34.sp
             )
-
             Text(
-                text = "Timer", color = orange_200, fontSize = 34.sp
+                text = "No Phone", color = Accent, fontSize = 34.sp
+            )
+            Text(
+                text = "Timer", color = Accent, fontSize = 34.sp
             )
 
             Spacer(
@@ -115,16 +88,14 @@ fun NoPhoneTimerScreen() {
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(28.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = CardColor
+                    containerColor = BackgroundSecondary
                 )
             ) {
-
                 Column(
                     modifier = Modifier.padding(28.dp)
                 ) {
-
                     Text(
-                        text = "Today", color = orange_200, fontSize = 14.sp
+                        text = "Today", color = Accent, fontSize = 14.sp
                     )
 
                     Spacer(
@@ -132,9 +103,9 @@ fun NoPhoneTimerScreen() {
                     )
 
                     Text(
-                        text = formatDuration(todayTotal),
-                        color = HighEmphasisWhite,
-                        fontSize = 56.sp
+                        text = formatDuration(
+                            appState.todayTotal
+                        ), color = TextPrimary, fontSize = 56.sp
                     )
                 }
             }
@@ -147,47 +118,40 @@ fun NoPhoneTimerScreen() {
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(28.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = CardColor
+                    containerColor = BackgroundSecondary
                 )
             ) {
-
                 Column(
                     modifier = Modifier.padding(28.dp)
                 ) {
-
                     Text(
-                        text = "Last 7 Days", color = orange_200, fontSize = 14.sp
+                        text = "Last 7 Days", color = Accent, fontSize = 14.sp
                     )
-
                     Spacer(
                         modifier = Modifier.height(20.dp)
                     )
 
-                    history.forEach { day ->
-
+                    appState.history.forEach { day ->
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-
                             Text(
-                                text = day.dayName, color = MediumEmphasisWhite
+                                text = day.dayName, color = TextSecondary
                             )
 
                             Text(
                                 text = formatShort(
                                     day.durationMs
-                                ), color = HighEmphasisWhite
+                                ), color = TextPrimary
                             )
                         }
-
                         Spacer(
                             modifier = Modifier.height(8.dp)
                         )
                     }
                 }
             }
-
             Spacer(
                 modifier = Modifier.weight(1f)
             )
@@ -196,14 +160,13 @@ fun NoPhoneTimerScreen() {
 }
 
 fun formatDuration(ms: Long): String {
-
     val totalSeconds = ms / 1000
-
     val hours = totalSeconds / 3600
     val minutes = (totalSeconds % 3600) / 60
     val seconds = totalSeconds % 60
 
     return when {
+
         hours > 0 -> "${hours}h ${minutes}m ${seconds}s"
 
         minutes > 0 -> "${minutes}m ${seconds}s"
@@ -213,9 +176,7 @@ fun formatDuration(ms: Long): String {
 }
 
 fun formatShort(ms: Long): String {
-
     val totalMinutes = ms / 1000 / 60
-
     val hours = totalMinutes / 60
     val minutes = totalMinutes % 60
 

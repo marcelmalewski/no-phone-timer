@@ -19,7 +19,9 @@ class TrackingService : Service() {
             addAction(Intent.ACTION_USER_PRESENT)
         }
 
-        registerReceiver(receiver, filter)
+        registerReceiver(
+            receiver, filter
+        )
     }
 
     override fun onStartCommand(
@@ -33,7 +35,9 @@ class TrackingService : Service() {
         super.onDestroy()
     }
 
-    override fun onBind(intent: Intent?): IBinder? {
+    override fun onBind(
+        intent: Intent?
+    ): IBinder? {
         return null
     }
 }

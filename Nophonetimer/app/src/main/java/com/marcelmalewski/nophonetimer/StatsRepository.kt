@@ -1,6 +1,8 @@
 package com.marcelmalewski.nophonetimer
 
 import android.content.Context
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -14,7 +16,13 @@ object StatsRepository {
 
     private const val PREFS = "no_phone_timer"
 
-    private fun dateKey(date: Date): String {
+    private val _state = MutableStateFlow(AppState())
+
+    val state: StateFlow<AppState> = _state
+
+    private fun dateKey(
+        date: Date
+    ): String {
         return "stats_" + SimpleDateFormat(
             "yyyy_MM_dd", Locale.getDefault()
         ).format(date)
@@ -22,6 +30,12 @@ object StatsRepository {
 
     private fun todayKey(): String {
         return dateKey(Date())
+    }
+
+    fun initialize(
+        context: Context
+    ) {
+        refresh(context)
     }
 
     fun addSession(
@@ -41,9 +55,11 @@ object StatsRepository {
         prefs.edit().putLong(
                 key, current + durationMs
             ).apply()
+
+        refresh(context)
     }
 
-    fun getToday(
+    private fun getToday(
         context: Context
     ): Long {
 
@@ -56,7 +72,7 @@ object StatsRepository {
         )
     }
 
-    fun getLast7Days(
+    private fun getLast7Days(
         context: Context
     ): List<DayStat> {
 
@@ -72,10 +88,8 @@ object StatsRepository {
 
             val date = calendar.time
 
-            val key = dateKey(date)
-
             val value = prefs.getLong(
-                key, 0
+                dateKey(date), 0
             )
 
             val dayName = SimpleDateFormat(
@@ -94,5 +108,14 @@ object StatsRepository {
         }
 
         return result
+    }
+
+    fun refresh(
+        context: Context
+    ) {
+
+        _state.value = AppState(
+            todayTotal = getToday(context), history = getLast7Days(context)
+        )
     }
 }
