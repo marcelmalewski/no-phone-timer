@@ -6,8 +6,8 @@ import java.util.Date
 import java.util.Locale
 
 data class SessionPart(
-    val dayKey: String,
-    val durationMs: Long
+    val day: String,
+    val duration: Long
 )
 
 object SessionSplitter {
@@ -25,7 +25,7 @@ object SessionSplitter {
 
         if (sameDay) {
             return listOf(
-                SessionPart(dayKey = dateKey(Date(startTime)), durationMs = endTime - startTime)
+                SessionPart(day = dateKey(Date(startTime)), duration = endTime - startTime)
             )
         }
 
@@ -44,12 +44,12 @@ object SessionSplitter {
         val secondPart = endTime - midnight.timeInMillis
         return listOf(
             SessionPart(
-                dayKey = dateKey(Date(startTime)),
-                durationMs = firstPart
+                day = dateKey(Date(startTime)),
+                duration = firstPart
             ),
             SessionPart(
-                dayKey = dateKey(Date(endTime)),
-                durationMs = secondPart
+                day = dateKey(Date(endTime)),
+                duration = secondPart
             )
         )
     }
