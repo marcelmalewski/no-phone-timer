@@ -31,26 +31,19 @@ class ScreenReceiver : BroadcastReceiver() {
             }
 
             Intent.ACTION_USER_PRESENT -> {
-
-                val lockTime = prefs.getLong(
-                    "lock_time", 0
-                )
+                val lockTime = prefs.getLong("lock_time", 0)
 
                 if (lockTime > 0) {
-
                     val elapsed = System.currentTimeMillis() - lockTime
 
-                    StatsRepository.addSession(
-                        context, elapsed
-                    )
+                    StatsRepository.addSession(context, lockTime, System.currentTimeMillis())
 
-                    prefs.edit().putBoolean(
-                            "is_locked", false
-                        ).apply()
+                    prefs.edit()
+                        .putLong("lock_time", 0)
+                        .putBoolean("is_locked", false)
+                        .apply()
 
-                    Log.d(
-                        "NoPhoneTimer", "Added ${elapsed / 1000}s"
-                    )
+                    Log.d("NoPhoneTimer", "Added ${elapsed / 1000}s")
                 }
             }
         }

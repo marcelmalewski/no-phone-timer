@@ -35,30 +35,57 @@ object StatsRepository {
         refresh(context)
     }
 
-    fun addSession(
-        context: Context, durationMs: Long
-    ) {
+    fun addSession(context: Context, startTime: Long, endTime: Long) {
+        val start = Calendar.getInstance().apply {
+            timeInMillis = startTime
+        }
+        val end = Calendar.getInstance().apply {
+            timeInMillis = endTime
+        }
 
-        val prefs = context.getSharedPreferences(
-            PREFS, Context.MODE_PRIVATE
-        )
+        val sameDay =
+            start.get(Calendar.YEAR) == end.get(Calendar.YEAR)
+                    && start.get(Calendar.DAY_OF_YEAR) == end.get(Calendar.DAY_OF_YEAR)
 
-        val key = todayKey()
+        if (sameDay) {
+            addToDay(context, Date(startTime), endTime - startTime)
+        } else {
+            val midnight = Calendar.getInstance().apply {
+                timeInMillis = startTime
 
-        val current = prefs.getLong(
-            key, 0
-        )
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
 
-        prefs.edit().putLong(
-                key, current + durationMs
-            ).apply()
+                add(Calendar.DAY_OF_YEAR, 1)
+            }
+
+            val firstPart = midnight.timeInMillis - startTime
+
+            val secondPart = endTime - midnight.timeInMillis
+
+            addToDay(context, Date(startTime), firstPart)
+
+            addToDay(context, Date(endTime), secondPart)
+        }
 
         refresh(context)
     }
 
-    private fun getToday(
-        context: Context
-    ): Long {
+    private fun addToDay(context: Context, date: Date, durationMs: Long) {
+        val prefs = context.getSharedPreferences(
+            PREFS, Context.MODE_PRIVATE
+        )
+
+        val key = dateKey(date)
+
+        val current = prefs.getLong(key, 0)
+
+        prefs.edit().putLong(key, current + durationMs).apply()
+    }
+
+    private fun getToday(context: Context): Long {
 
         val prefs = context.getSharedPreferences(
             PREFS, Context.MODE_PRIVATE
@@ -69,9 +96,7 @@ object StatsRepository {
         )
     }
 
-    private fun getLast7Days(
-        context: Context
-    ): List<DayStatistics> {
+    private fun getLast7Days(context: Context): List<DayStatistics> {
 
         val prefs = context.getSharedPreferences(
             PREFS, Context.MODE_PRIVATE
@@ -107,9 +132,7 @@ object StatsRepository {
         return result
     }
 
-    fun refresh(
-        context: Context
-    ) {
+    fun refresh(context: Context) {
 
         _state.value = AppState(
             todayTotal = getToday(context), history = getLast7Days(context)
