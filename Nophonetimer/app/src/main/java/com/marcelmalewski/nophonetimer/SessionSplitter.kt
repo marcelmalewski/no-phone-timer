@@ -6,7 +6,7 @@ import java.util.Date
 import java.util.Locale
 
 data class SessionPart(
-    val day: String,
+    val dayKey: String,
     val duration: Long
 )
 
@@ -14,18 +14,17 @@ object SessionSplitter {
     fun split(startTime: Long, endTime: Long): List<SessionPart> {
         require(endTime >= startTime)
 
-        val start = Calendar.getInstance().apply {
+        val calendarWithStartTime = Calendar.getInstance().apply {
             timeInMillis = startTime
         }
-        val end = Calendar.getInstance().apply {
+        val calendarWithEndTime = Calendar.getInstance().apply {
             timeInMillis = endTime
         }
-        val sameDay = start.get(Calendar.YEAR) == end.get(Calendar.YEAR) &&
-                    start.get(Calendar.DAY_OF_YEAR) == end.get(Calendar.DAY_OF_YEAR)
-
-        if (sameDay) {
+        val isSameDay = calendarWithStartTime.get(Calendar.YEAR) == calendarWithEndTime.get(Calendar.YEAR) &&
+                calendarWithStartTime.get(Calendar.DAY_OF_YEAR) == calendarWithEndTime.get(Calendar.DAY_OF_YEAR)
+        if (isSameDay) {
             return listOf(
-                SessionPart(day = dateKey(Date(startTime)), duration = endTime - startTime)
+                SessionPart(dayKey = prepareDayKey(Date(startTime)), duration = endTime - startTime)
             )
         }
 
@@ -40,21 +39,15 @@ object SessionSplitter {
             add(Calendar.DAY_OF_YEAR, 1)
         }
 
-        val firstPart = midnight.timeInMillis - startTime
-        val secondPart = endTime - midnight.timeInMillis
+        val part1 = midnight.timeInMillis - startTime
+        val part2 = endTime - midnight.timeInMillis
         return listOf(
-            SessionPart(
-                day = dateKey(Date(startTime)),
-                duration = firstPart
-            ),
-            SessionPart(
-                day = dateKey(Date(endTime)),
-                duration = secondPart
-            )
+            SessionPart(dayKey = prepareDayKey(Date(startTime)), duration = part1),
+            SessionPart(dayKey = prepareDayKey(Date(endTime)), duration = part2)
         )
     }
 
-    private fun dateKey(date: Date): String {
+    private fun prepareDayKey(date: Date): String {
         return SimpleDateFormat("yyyy_MM_dd", Locale.getDefault())
             .format(date)
     }

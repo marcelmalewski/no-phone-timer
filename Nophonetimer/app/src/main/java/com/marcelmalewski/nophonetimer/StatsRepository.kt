@@ -33,7 +33,7 @@ object StatsRepository {
     fun addSession(context: Context, startTime: Long, endTime: Long) {
         val parts = SessionSplitter.split(startTime, endTime)
         parts.forEach { part ->
-            addToDay(context, part.day, part.duration)
+            addToDay(context, part.dayKey, part.duration)
         }
 
         refresh(context)
