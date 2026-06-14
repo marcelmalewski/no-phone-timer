@@ -120,9 +120,7 @@ fun NoPhoneTimerScreen() {
     }
 }
 
-fun Long.formatDuration(
-    showSeconds: Boolean = true
-): String {
+fun Long.formatDuration(showSeconds: Boolean = true): String {
     val totalSeconds = this / 1000
 
     val hours = totalSeconds / 3600
