@@ -28,7 +28,7 @@ class ScreenReceiver : BroadcastReceiver() {
                     val endTime = System.currentTimeMillis()
                     val elapsed = endTime - lockTime
 
-                    StatsRepository.addSession(context, lockTime, endTime)
+                    StatisticsRepository.addSession(context, lockTime, endTime)
 
                     prefs.edit()
                         .putLong("lock_time", 0)

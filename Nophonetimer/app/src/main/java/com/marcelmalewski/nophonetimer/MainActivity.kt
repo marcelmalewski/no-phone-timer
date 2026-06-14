@@ -46,10 +46,10 @@ class MainActivity : ComponentActivity() {
 fun NoPhoneTimerScreen() {
     val context = LocalContext.current
     LaunchedEffect(Unit) {
-        StatsRepository.initialize(context)
+        StatisticsRepository.initialize(context)
     }
 
-    val appState by StatsRepository.state.collectAsState()
+    val appState by StatisticsRepository.state.collectAsState()
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -104,7 +104,7 @@ fun NoPhoneTimerScreen() {
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(text = day.name, color = TextSecondary)
+                            Text(text = day.dayOfWeek, color = TextSecondary)
                             Text(
                                 text = day.noPhoneDuration.formatDuration(false),
                                 color = TextPrimary

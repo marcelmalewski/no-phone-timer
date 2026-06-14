@@ -6,7 +6,7 @@ import java.util.Date
 import java.util.Locale
 
 data class SessionPart(
-    val dayKey: String,
+    val date: String,
     val duration: Long
 )
 
@@ -14,17 +14,17 @@ object SessionSplitter {
     fun split(startTime: Long, endTime: Long): List<SessionPart> {
         require(endTime >= startTime)
 
-        val calendarWithStartTime = Calendar.getInstance().apply {
+        val startDate = Calendar.getInstance().apply {
             timeInMillis = startTime
         }
-        val calendarWithEndTime = Calendar.getInstance().apply {
+        val endDate = Calendar.getInstance().apply {
             timeInMillis = endTime
         }
-        val isSameDay = calendarWithStartTime.get(Calendar.YEAR) == calendarWithEndTime.get(Calendar.YEAR) &&
-                calendarWithStartTime.get(Calendar.DAY_OF_YEAR) == calendarWithEndTime.get(Calendar.DAY_OF_YEAR)
+        val isSameDay = startDate.get(Calendar.YEAR) == endDate.get(Calendar.YEAR) &&
+                startDate.get(Calendar.DAY_OF_YEAR) == endDate.get(Calendar.DAY_OF_YEAR)
         if (isSameDay) {
             return listOf(
-                SessionPart(dayKey = prepareDayKey(Date(startTime)), duration = endTime - startTime)
+                SessionPart(date = prepareSessionDate(Date(startTime)), duration = endTime - startTime)
             )
         }
 
@@ -42,12 +42,12 @@ object SessionSplitter {
         val part1 = midnight.timeInMillis - startTime
         val part2 = endTime - midnight.timeInMillis
         return listOf(
-            SessionPart(dayKey = prepareDayKey(Date(startTime)), duration = part1),
-            SessionPart(dayKey = prepareDayKey(Date(endTime)), duration = part2)
+            SessionPart(date = prepareSessionDate(Date(startTime)), duration = part1),
+            SessionPart(date = prepareSessionDate(Date(endTime)), duration = part2)
         )
     }
 
-    private fun prepareDayKey(date: Date): String {
+    private fun prepareSessionDate(date: Date): String {
         return SimpleDateFormat("yyyy_MM_dd", Locale.getDefault())
             .format(date)
     }
