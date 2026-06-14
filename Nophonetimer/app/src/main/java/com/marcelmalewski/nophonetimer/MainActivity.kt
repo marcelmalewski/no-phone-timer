@@ -33,7 +33,6 @@ class MainActivity : ComponentActivity() {
         startService(
             Intent(this, TrackingService::class.java)
         )
-
         enableEdgeToEdge()
         setContent {
             NoPhoneTimerTheme {
@@ -47,9 +46,7 @@ class MainActivity : ComponentActivity() {
 fun NoPhoneTimerScreen() {
     val context = LocalContext.current
     LaunchedEffect(Unit) {
-        StatsRepository.initialize(
-            context
-        )
+        StatsRepository.initialize(context)
     }
 
     val appState by StatsRepository.state.collectAsState()
@@ -58,131 +55,95 @@ fun NoPhoneTimerScreen() {
             .fillMaxSize()
             .background(Background)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.32f)
-                .background(Background)
-        )
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(24.dp)
         ) {
-            Spacer(
-                modifier = Modifier.height(60.dp)
+            Spacer(modifier = Modifier.height(60.dp))
 
-            )
-            Text(
-                text = "No Phone", color = Accent, fontSize = 34.sp
-            )
-            Text(
-                text = "Timer", color = Accent, fontSize = 34.sp
-            )
+            Text(text = "No Phone", color = Accent, fontSize = 34.sp)
+            Text(text = "Timer", color = Accent, fontSize = 34.sp)
 
-            Spacer(
-                modifier = Modifier.weight(1f)
-            )
+            Spacer(modifier = Modifier.weight(1f))
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(28.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = BackgroundSecondary
-                )
+                colors = CardDefaults.cardColors(containerColor = BackgroundSecondary)
             ) {
                 Column(
                     modifier = Modifier.padding(28.dp)
                 ) {
-                    Text(
-                        text = "Today", color = Accent, fontSize = 14.sp
-                    )
+                    Text(text = "Today", color = Accent, fontSize = 14.sp)
 
-                    Spacer(
-                        modifier = Modifier.height(12.dp)
-                    )
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = formatDuration(
-                            appState.todayTotal
-                        ), color = TextPrimary, fontSize = 56.sp
+                        text = appState.todayTotal.formatDuration(),
+                        color = TextPrimary,
+                        fontSize = 56.sp
                     )
                 }
             }
 
-            Spacer(
-                modifier = Modifier.height(20.dp)
-            )
+            Spacer(modifier = Modifier.height(20.dp))
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(28.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = BackgroundSecondary
-                )
+                colors = CardDefaults.cardColors(containerColor = BackgroundSecondary)
             ) {
-                Column(
-                    modifier = Modifier.padding(28.dp)
-                ) {
-                    Text(
-                        text = "Last 7 Days", color = Accent, fontSize = 14.sp
-                    )
-                    Spacer(
-                        modifier = Modifier.height(20.dp)
-                    )
+                Column(modifier = Modifier.padding(28.dp)) {
+                    Text(text = "Last 7 Days", color = Accent, fontSize = 14.sp)
+
+                    Spacer(modifier = Modifier.height(20.dp))
 
                     appState.history.forEach { day ->
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
+                            Text(text = day.name, color = TextSecondary)
                             Text(
-                                text = day.dayName, color = TextSecondary
-                            )
-
-                            Text(
-                                text = formatShort(
-                                    day.durationMs
-                                ), color = TextPrimary
+                                text = day.noPhoneDuration.formatDuration(false),
+                                color = TextPrimary
                             )
                         }
-                        Spacer(
-                            modifier = Modifier.height(8.dp)
-                        )
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
             }
-            Spacer(
-                modifier = Modifier.weight(1f)
-            )
+
+            Spacer(modifier = Modifier.weight(1f))
         }
     }
 }
 
-fun formatDuration(ms: Long): String {
-    val totalSeconds = ms / 1000
+fun Long.formatDuration(
+    showSeconds: Boolean = true
+): String {
+    val totalSeconds = this / 1000
+
     val hours = totalSeconds / 3600
     val minutes = (totalSeconds % 3600) / 60
     val seconds = totalSeconds % 60
 
-    return when {
+    return buildString {
+        if (hours > 0) {
+            append("${hours}h ")
+        }
 
-        hours > 0 -> "${hours}h ${minutes}m ${seconds}s"
+        if (minutes > 0 || hours > 0) {
+            append("${minutes}m")
+        }
 
-        minutes > 0 -> "${minutes}m ${seconds}s"
-
-        else -> "${seconds}s"
-    }
-}
-
-fun formatShort(ms: Long): String {
-    val totalMinutes = ms / 1000 / 60
-    val hours = totalMinutes / 60
-    val minutes = totalMinutes % 60
-
-    return when {
-        hours > 0 -> "${hours}h ${minutes}m"
-
-        else -> "${minutes}m"
+        if (showSeconds) {
+            if (isNotEmpty()) {
+                append(" ")
+            } else {
+                append("${seconds}s")
+            }
+        }
     }
 }

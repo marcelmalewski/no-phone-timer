@@ -8,16 +8,13 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-data class DayStat(
-    val dayName: String, val durationMs: Long
+data class DayStatistics(
+    val name: String, val noPhoneDuration: Long
 )
 
 object StatsRepository {
-
     private const val PREFS = "no_phone_timer"
-
     private val _state = MutableStateFlow(AppState())
-
     val state: StateFlow<AppState> = _state
 
     private fun dateKey(
@@ -74,13 +71,13 @@ object StatsRepository {
 
     private fun getLast7Days(
         context: Context
-    ): List<DayStat> {
+    ): List<DayStatistics> {
 
         val prefs = context.getSharedPreferences(
             PREFS, Context.MODE_PRIVATE
         )
 
-        val result = mutableListOf<DayStat>()
+        val result = mutableListOf<DayStatistics>()
 
         val calendar = Calendar.getInstance()
 
@@ -97,7 +94,7 @@ object StatsRepository {
             ).format(date)
 
             result.add(
-                DayStat(
+                DayStatistics(
                     dayName, value
                 )
             )
