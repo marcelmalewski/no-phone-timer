@@ -7,6 +7,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -25,6 +27,8 @@ import com.marcelmalewski.nophonetimer.ui.theme.TextPrimary
 import com.marcelmalewski.nophonetimer.ui.theme.TextSecondary
 import com.marcelmalewski.nophonetimer.ui.theme.NoPhoneTimerTheme
 import com.marcelmalewski.nophonetimer.ui.theme.Accent
+import android.provider.Settings
+import androidx.compose.material3.Button
 
 
 class MainActivity : ComponentActivity() {
@@ -50,6 +54,7 @@ fun NoPhoneTimerScreen() {
     }
 
     val appState by StatisticsRepository.state.collectAsState()
+    val batteryOptimizationDisabled = isBatteryOptimizationDisabled(context)
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -58,6 +63,7 @@ fun NoPhoneTimerScreen() {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(24.dp)
         ) {
             Spacer(modifier = Modifier.height(60.dp))
@@ -65,7 +71,7 @@ fun NoPhoneTimerScreen() {
             Text(text = "No Phone", color = Accent, fontSize = 34.sp)
             Text(text = "Timer", color = Accent, fontSize = 34.sp)
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(40.dp))
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -115,7 +121,42 @@ fun NoPhoneTimerScreen() {
                 }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Column(
+                modifier = Modifier.padding(28.dp)
+            ) {
+                Text(
+                    text = "Battery Optimization", color = Accent, fontSize = 14.sp
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = if (batteryOptimizationDisabled) {
+                        "Disabled ✓"
+                    } else {
+                        "Enabled ⚠"
+                    }, color = TextPrimary, fontSize = 24.sp
+                )
+
+                if (!batteryOptimizationDisabled) {
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Button(
+                        onClick = {
+                            val intent = Intent(
+                                Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS
+                            )
+
+                            context.startActivity(intent)
+                        }) {
+                        Text("Open Battery Settings")
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }
