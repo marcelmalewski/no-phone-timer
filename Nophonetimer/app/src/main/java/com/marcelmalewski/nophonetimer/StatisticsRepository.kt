@@ -55,9 +55,9 @@ object StatisticsRepository {
         val calendar = Calendar.getInstance()
 
         repeat(7) {
-            val date = calendar.time
-            val noPhoneDuration = sharedPrefs.getLong(prepareSessionDateKey(date), 0)
-            val dayOfWeek = SimpleDateFormat("EEE", Locale.getDefault()).format(date)
+            val currentDate = calendar.time
+            val noPhoneDuration = sharedPrefs.getLong(prepareSessionDateKey(currentDate), 0)
+            val dayOfWeek = SimpleDateFormat("EEE", Locale.getDefault()).format(currentDate)
 
             last7Days.add(DayStatistics(dayOfWeek, noPhoneDuration))
             calendar.add(Calendar.DAY_OF_YEAR, -1)
@@ -68,10 +68,10 @@ object StatisticsRepository {
 
     private fun prepareSessionDateKey(date: Date): String {
         return "stats_" +
-                SimpleDateFormat("yyyy_MM_dd", Locale.getDefault()).format(date)
+                SimpleDateFormat("yyyy_MM_dd", Locale.ROOT).format(date)
     }
 
     private fun toSessionDateKey(sessionDate: String): String {
-        return "stats_$sessionDate";
+        return "stats_$sessionDate"
     }
 }
