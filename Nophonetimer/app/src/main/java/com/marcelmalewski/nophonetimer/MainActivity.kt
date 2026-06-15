@@ -134,10 +134,12 @@ fun NoPhoneTimerScreen() {
 
                 Text(
                     text = if (batteryOptimizationDisabled) {
-                        "Disabled ✓"
+                        "Unrestricted ✓"
                     } else {
-                        "Enabled ⚠"
-                    }, color = TextPrimary, fontSize = 24.sp
+                        "Optimized ⚠"
+                    },
+                    color = TextPrimary,
+                    fontSize = 24.sp
                 )
 
                 if (!batteryOptimizationDisabled) {
