@@ -21,6 +21,10 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -60,17 +64,24 @@ fun NoPhoneTimerScreen() {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
+    var usageGranted by remember {
+        mutableStateOf(false)
+    }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 scope.launch {
+
+                    usageGranted = hasUsageAccess(context)
+
                     StatisticsRepository.refresh(context)
                 }
             }
         }
 
         lifecycleOwner.lifecycle.addObserver(observer)
+
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
@@ -85,16 +96,6 @@ fun NoPhoneTimerScreen() {
     }
 
     val appState by StatisticsRepository.state.collectAsState()
-
-    val start = System.currentTimeMillis()
-
-    val usageGranted = hasUsageAccess(context)
-
-    Log.d(
-        "NoPhoneTimer",
-        "usage access check took ${System.currentTimeMillis() - start} ms"
-    )
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -109,13 +110,9 @@ fun NoPhoneTimerScreen() {
 
             Spacer(modifier = Modifier.height(60.dp))
 
-            Text(
-                text = "No Phone", color = Accent, fontSize = 34.sp
-            )
+            Text(text = "No Phone", color = Accent, fontSize = 34.sp)
 
-            Text(
-                text = "Timer", color = Accent, fontSize = 34.sp
-            )
+            Text(text = "Timer", color = Accent, fontSize = 34.sp)
 
             Spacer(modifier = Modifier.height(40.dp))
 
@@ -130,9 +127,7 @@ fun NoPhoneTimerScreen() {
                     modifier = Modifier.padding(28.dp)
                 ) {
 
-                    Text(
-                        text = "Today", color = Accent, fontSize = 14.sp
-                    )
+                    Text(text = "Today", color = Accent, fontSize = 14.sp)
 
                     Spacer(modifier = Modifier.height(12.dp))
 
@@ -192,13 +187,9 @@ fun NoPhoneTimerScreen() {
                     modifier = Modifier.padding(28.dp)
                 ) {
 
-                    Text(
-                        text = "Usage Access", color = Accent, fontSize = 14.sp
-                    )
+                    Text(text = "Usage Access", color = Accent, fontSize = 14.sp)
 
-                    Spacer(
-                        modifier = Modifier.height(12.dp)
-                    )
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
                         text = if (usageGranted) {
@@ -209,10 +200,7 @@ fun NoPhoneTimerScreen() {
                     )
 
                     if (!usageGranted) {
-
-                        Spacer(
-                            modifier = Modifier.height(16.dp)
-                        )
+                        Spacer(modifier = Modifier.height(16.dp))
 
                         Button(
                             onClick = {
@@ -234,25 +222,19 @@ fun NoPhoneTimerScreen() {
 }
 
 fun Long.formatDuration(showSeconds: Boolean = true): String {
-
     val totalSeconds = this / 1000
-
     val hours = totalSeconds / 3600
     val minutes = (totalSeconds % 3600) / 60
     val seconds = totalSeconds % 60
 
     return buildString {
-
         if (hours > 0) {
             append("${hours}h ")
         }
-
         if (minutes > 0 || hours > 0) {
             append("${minutes}m")
         }
-
         if (showSeconds) {
-
             if (isNotEmpty()) {
                 append(" ")
             }
