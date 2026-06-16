@@ -16,6 +16,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -23,12 +24,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import kotlinx.coroutines.delay
 import com.marcelmalewski.nophonetimer.ui.theme.Accent
 import com.marcelmalewski.nophonetimer.ui.theme.Background
 import com.marcelmalewski.nophonetimer.ui.theme.BackgroundSecondary
 import com.marcelmalewski.nophonetimer.ui.theme.NoPhoneTimerTheme
 import com.marcelmalewski.nophonetimer.ui.theme.TextPrimary
 import com.marcelmalewski.nophonetimer.ui.theme.TextSecondary
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 class MainActivity : ComponentActivity() {
 
@@ -49,9 +56,32 @@ class MainActivity : ComponentActivity() {
 fun NoPhoneTimerScreen() {
 
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner) {
+
+        val observer = LifecycleEventObserver { _, event ->
+
+            if (event == Lifecycle.Event.ON_RESUME) {
+                StatisticsRepository.refresh(context)
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     LaunchedEffect(Unit) {
-        StatisticsRepository.refresh(context)
+
+        while (true) {
+
+            StatisticsRepository.refresh(context)
+
+            delay(5.minutes)
+        }
     }
 
     val appState by StatisticsRepository.state.collectAsState()
@@ -73,15 +103,11 @@ fun NoPhoneTimerScreen() {
             Spacer(modifier = Modifier.height(60.dp))
 
             Text(
-                text = "No Phone",
-                color = Accent,
-                fontSize = 34.sp
+                text = "No Phone", color = Accent, fontSize = 34.sp
             )
 
             Text(
-                text = "Timer",
-                color = Accent,
-                fontSize = 34.sp
+                text = "Timer", color = Accent, fontSize = 34.sp
             )
 
             Spacer(modifier = Modifier.height(40.dp))
@@ -98,9 +124,7 @@ fun NoPhoneTimerScreen() {
                 ) {
 
                     Text(
-                        text = "Today",
-                        color = Accent,
-                        fontSize = 14.sp
+                        text = "Today", color = Accent, fontSize = 14.sp
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -127,9 +151,7 @@ fun NoPhoneTimerScreen() {
                 ) {
 
                     Text(
-                        text = "Last 7 Days",
-                        color = Accent,
-                        fontSize = 14.sp
+                        text = "Last 7 Days", color = Accent, fontSize = 14.sp
                     )
 
                     Spacer(modifier = Modifier.height(20.dp))
@@ -138,18 +160,15 @@ fun NoPhoneTimerScreen() {
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement =
-                                Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
 
                             Text(
-                                text = day.dayOfWeek,
-                                color = TextSecondary
+                                text = day.dayOfWeek, color = TextSecondary
                             )
 
                             Text(
-                                text = day.noPhoneDuration
-                                    .formatDuration(false),
+                                text = day.noPhoneDuration.formatDuration(false),
                                 color = TextPrimary
                             )
                         }
@@ -175,9 +194,7 @@ fun NoPhoneTimerScreen() {
                 ) {
 
                     Text(
-                        text = "Usage Access",
-                        color = Accent,
-                        fontSize = 14.sp
+                        text = "Usage Access", color = Accent, fontSize = 14.sp
                     )
 
                     Spacer(
@@ -189,9 +206,7 @@ fun NoPhoneTimerScreen() {
                             "Granted ✓"
                         } else {
                             "Required ⚠"
-                        },
-                        color = TextPrimary,
-                        fontSize = 24.sp
+                        }, color = TextPrimary, fontSize = 24.sp
                     )
 
                     if (!usageGranted) {
@@ -207,8 +222,7 @@ fun NoPhoneTimerScreen() {
                                         Settings.ACTION_USAGE_ACCESS_SETTINGS
                                     )
                                 )
-                            }
-                        ) {
+                            }) {
                             Text("Grant Usage Access")
                         }
                     }
@@ -220,9 +234,7 @@ fun NoPhoneTimerScreen() {
     }
 }
 
-fun Long.formatDuration(
-    showSeconds: Boolean = true
-): String {
+fun Long.formatDuration(showSeconds: Boolean = true): String {
 
     val totalSeconds = this / 1000
 

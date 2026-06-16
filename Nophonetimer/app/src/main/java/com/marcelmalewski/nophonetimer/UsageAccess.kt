@@ -1,17 +1,16 @@
 package com.marcelmalewski.nophonetimer
 
-import android.app.AppOpsManager
 import android.content.Context
-import android.os.Process
+import android.app.usage.UsageStatsManager
 
 fun hasUsageAccess(context: Context): Boolean {
-    val appOps = context.getSystemService(AppOpsManager::class.java)
+    val usageStatsManager = context.getSystemService(UsageStatsManager::class.java)
+    val now = System.currentTimeMillis()
 
-    val mode = appOps.unsafeCheckOpNoThrow(
-        AppOpsManager.OPSTR_GET_USAGE_STATS,
-        Process.myUid(),
-        context.packageName
-    )
-
-    return mode == AppOpsManager.MODE_ALLOWED
+    val stats = usageStatsManager.queryUsageStats(
+            UsageStatsManager.INTERVAL_DAILY,
+            now - 24 * 60 * 60 * 1000L,
+            now
+        )
+    return stats.isNotEmpty()
 }
