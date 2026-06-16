@@ -1,77 +1,106 @@
 package com.marcelmalewski.nophonetimer
 
+import android.app.usage.UsageStats
+import android.app.usage.UsageStatsManager
 import android.content.Context
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
 import java.util.Locale
-import androidx.core.content.edit
-
-data class DayStatistics(
-    val dayOfWeek: String, val noPhoneDuration: Long
-)
 
 object StatisticsRepository {
-    private const val SHARED_PREFS_NAME = "no_phone_timer"
+
     private val _state = MutableStateFlow(AppState())
     val state: StateFlow<AppState> = _state
 
-    fun initialize(context: Context) {
-        refreshAppState(context)
-    }
-
-    fun addSession(context: Context, startTime: Long, endTime: Long) {
-        val parts = SessionSplitter.split(startTime, endTime)
-        parts.forEach { part -> updateStatistics(context, part.date, part.duration) }
-        refreshAppState(context)
-    }
-
-    private fun updateStatistics(context: Context, sessionDate: String, duration: Long) {
-        val sharedPrefs = context.getSharedPreferences(SHARED_PREFS_NAME, Context.MODE_PRIVATE)
-        val currValue = sharedPrefs.getLong(toSessionDateKey(sessionDate), 0)
-
-        sharedPrefs.edit {
-            putLong(toSessionDateKey(sessionDate), currValue + duration)
-        }
-    }
-
-    private fun refreshAppState(context: Context) {
+    fun refresh(context: Context) {
         _state.value = AppState(
             todayTotal = getTodayTotal(context),
             history = getLast7Days(context)
         )
     }
 
-    private fun getTodayTotal(context: Context): Long {
-        val sharedPrefs = context.getSharedPreferences(SHARED_PREFS_NAME, Context.MODE_PRIVATE)
-        return sharedPrefs.getLong(prepareSessionDateKey(Date()), 0)
-    }
+    private fun getTodayTotal(
+        context: Context
+    ): Long {
 
-    private fun getLast7Days(context: Context): List<DayStatistics> {
-        val sharedPrefs = context.getSharedPreferences(SHARED_PREFS_NAME, Context.MODE_PRIVATE)
-        val last7Days = mutableListOf<DayStatistics>()
         val calendar = Calendar.getInstance()
 
-        repeat(7) {
-            val currentDate = calendar.time
-            val noPhoneDuration = sharedPrefs.getLong(prepareSessionDateKey(currentDate), 0)
-            val dayOfWeek = SimpleDateFormat("EEE", Locale.getDefault()).format(currentDate)
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
 
-            last7Days.add(DayStatistics(dayOfWeek, noPhoneDuration))
-            calendar.add(Calendar.DAY_OF_YEAR, -1)
+        return getScreenTime(
+            context,
+            calendar.timeInMillis,
+            System.currentTimeMillis()
+        )
+    }
+
+    private fun getLast7Days(
+        context: Context
+    ): List<DayStatistics> {
+
+        val result = mutableListOf<DayStatistics>()
+
+        repeat(7) { offset ->
+
+            val cal = Calendar.getInstance()
+
+            cal.add(Calendar.DAY_OF_YEAR, -offset)
+
+            cal.set(Calendar.HOUR_OF_DAY, 0)
+            cal.set(Calendar.MINUTE, 0)
+            cal.set(Calendar.SECOND, 0)
+            cal.set(Calendar.MILLISECOND, 0)
+
+            val start = cal.timeInMillis
+
+            cal.add(Calendar.DAY_OF_YEAR, 1)
+
+            val end = cal.timeInMillis
+
+            val label = SimpleDateFormat(
+                "EEE",
+                Locale.getDefault()
+            ).format(start)
+
+            result.add(
+                DayStatistics(
+                    dayOfWeek = label,
+                    noPhoneDuration = getScreenTime(
+                        context,
+                        start,
+                        end
+                    )
+                )
+            )
         }
 
-        return last7Days
+        return result
     }
 
-    private fun prepareSessionDateKey(date: Date): String {
-        return "stats_" +
-                SimpleDateFormat("yyyy_MM_dd", Locale.ROOT).format(date)
-    }
+    private fun getScreenTime(
+        context: Context,
+        start: Long,
+        end: Long
+    ): Long {
 
-    private fun toSessionDateKey(sessionDate: String): String {
-        return "stats_$sessionDate"
+        val usageStatsManager =
+            context.getSystemService(
+                UsageStatsManager::class.java
+            )
+
+        val stats = usageStatsManager.queryUsageStats(
+            UsageStatsManager.INTERVAL_DAILY,
+            start,
+            end
+        )
+
+        return stats.sumOf(
+            UsageStats::getTotalTimeInForeground
+        )
     }
 }

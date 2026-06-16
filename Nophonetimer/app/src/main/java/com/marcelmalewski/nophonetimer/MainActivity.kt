@@ -2,14 +2,16 @@ package com.marcelmalewski.nophonetimer
 
 import android.content.Intent
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
@@ -21,23 +23,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.marcelmalewski.nophonetimer.ui.theme.Accent
 import com.marcelmalewski.nophonetimer.ui.theme.Background
 import com.marcelmalewski.nophonetimer.ui.theme.BackgroundSecondary
+import com.marcelmalewski.nophonetimer.ui.theme.NoPhoneTimerTheme
 import com.marcelmalewski.nophonetimer.ui.theme.TextPrimary
 import com.marcelmalewski.nophonetimer.ui.theme.TextSecondary
-import com.marcelmalewski.nophonetimer.ui.theme.NoPhoneTimerTheme
-import com.marcelmalewski.nophonetimer.ui.theme.Accent
-import android.provider.Settings
-import androidx.compose.material3.Button
-
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        startService(
-            Intent(this, TrackingService::class.java)
-        )
+
         enableEdgeToEdge()
+
         setContent {
             NoPhoneTimerTheme {
                 NoPhoneTimerScreen()
@@ -48,13 +47,17 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun NoPhoneTimerScreen() {
+
     val context = LocalContext.current
+
     LaunchedEffect(Unit) {
-        StatisticsRepository.initialize(context)
+        StatisticsRepository.refresh(context)
     }
 
     val appState by StatisticsRepository.state.collectAsState()
-    val batteryOptimizationDisabled = isBatteryOptimizationDisabled(context)
+
+    val usageGranted = hasUsageAccess(context)
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -66,22 +69,39 @@ fun NoPhoneTimerScreen() {
                 .verticalScroll(rememberScrollState())
                 .padding(24.dp)
         ) {
+
             Spacer(modifier = Modifier.height(60.dp))
 
-            Text(text = "No Phone", color = Accent, fontSize = 34.sp)
-            Text(text = "Timer", color = Accent, fontSize = 34.sp)
+            Text(
+                text = "No Phone",
+                color = Accent,
+                fontSize = 34.sp
+            )
+
+            Text(
+                text = "Timer",
+                color = Accent,
+                fontSize = 34.sp
+            )
 
             Spacer(modifier = Modifier.height(40.dp))
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(28.dp),
-                colors = CardDefaults.cardColors(containerColor = BackgroundSecondary)
+                colors = CardDefaults.cardColors(
+                    containerColor = BackgroundSecondary
+                )
             ) {
                 Column(
                     modifier = Modifier.padding(28.dp)
                 ) {
-                    Text(text = "Today", color = Accent, fontSize = 14.sp)
+
+                    Text(
+                        text = "Today",
+                        color = Accent,
+                        fontSize = 14.sp
+                    )
 
                     Spacer(modifier = Modifier.height(12.dp))
 
@@ -98,62 +118,99 @@ fun NoPhoneTimerScreen() {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(28.dp),
-                colors = CardDefaults.cardColors(containerColor = BackgroundSecondary)
+                colors = CardDefaults.cardColors(
+                    containerColor = BackgroundSecondary
+                )
             ) {
-                Column(modifier = Modifier.padding(28.dp)) {
-                    Text(text = "Last 7 Days", color = Accent, fontSize = 14.sp)
+                Column(
+                    modifier = Modifier.padding(28.dp)
+                ) {
+
+                    Text(
+                        text = "Last 7 Days",
+                        color = Accent,
+                        fontSize = 14.sp
+                    )
 
                     Spacer(modifier = Modifier.height(20.dp))
 
                     appState.history.forEach { day ->
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement =
+                                Arrangement.SpaceBetween
                         ) {
-                            Text(text = day.dayOfWeek, color = TextSecondary)
+
                             Text(
-                                text = day.noPhoneDuration.formatDuration(false),
+                                text = day.dayOfWeek,
+                                color = TextSecondary
+                            )
+
+                            Text(
+                                text = day.noPhoneDuration
+                                    .formatDuration(false),
                                 color = TextPrimary
                             )
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Spacer(
+                            modifier = Modifier.height(8.dp)
+                        )
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Column(
-                modifier = Modifier.padding(28.dp)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(28.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = BackgroundSecondary
+                )
             ) {
-                Text(
-                    text = "Battery Optimization", color = Accent, fontSize = 14.sp
-                )
+                Column(
+                    modifier = Modifier.padding(28.dp)
+                ) {
 
-                Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "Usage Access",
+                        color = Accent,
+                        fontSize = 14.sp
+                    )
 
-                Text(
-                    text = if (batteryOptimizationDisabled) {
-                        "Unrestricted ✓"
-                    } else {
-                        "Optimized ⚠"
-                    },
-                    color = TextPrimary,
-                    fontSize = 24.sp
-                )
+                    Spacer(
+                        modifier = Modifier.height(12.dp)
+                    )
 
-                if (!batteryOptimizationDisabled) {
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = if (usageGranted) {
+                            "Granted ✓"
+                        } else {
+                            "Required ⚠"
+                        },
+                        color = TextPrimary,
+                        fontSize = 24.sp
+                    )
 
-                    Button(
-                        onClick = {
-                            val intent = Intent(
-                                Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS
-                            )
+                    if (!usageGranted) {
 
-                            context.startActivity(intent)
-                        }) {
-                        Text("Open Battery Settings")
+                        Spacer(
+                            modifier = Modifier.height(16.dp)
+                        )
+
+                        Button(
+                            onClick = {
+                                context.startActivity(
+                                    Intent(
+                                        Settings.ACTION_USAGE_ACCESS_SETTINGS
+                                    )
+                                )
+                            }
+                        ) {
+                            Text("Grant Usage Access")
+                        }
                     }
                 }
             }
@@ -163,7 +220,10 @@ fun NoPhoneTimerScreen() {
     }
 }
 
-fun Long.formatDuration(showSeconds: Boolean = true): String {
+fun Long.formatDuration(
+    showSeconds: Boolean = true
+): String {
+
     val totalSeconds = this / 1000
 
     val hours = totalSeconds / 3600
@@ -171,6 +231,7 @@ fun Long.formatDuration(showSeconds: Boolean = true): String {
     val seconds = totalSeconds % 60
 
     return buildString {
+
         if (hours > 0) {
             append("${hours}h ")
         }
@@ -180,6 +241,7 @@ fun Long.formatDuration(showSeconds: Boolean = true): String {
         }
 
         if (showSeconds) {
+
             if (isNotEmpty()) {
                 append(" ")
             } else {
