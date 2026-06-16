@@ -3,7 +3,6 @@ package com.marcelmalewski.nophonetimer
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -24,7 +23,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -41,8 +39,9 @@ import com.marcelmalewski.nophonetimer.ui.theme.NoPhoneTimerTheme
 import com.marcelmalewski.nophonetimer.ui.theme.TextPrimary
 import com.marcelmalewski.nophonetimer.ui.theme.TextSecondary
 import kotlinx.coroutines.launch
+import java.util.Calendar
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 
 class MainActivity : ComponentActivity() {
 
@@ -88,10 +87,24 @@ fun NoPhoneTimerScreen() {
     }
 
     LaunchedEffect(Unit) {
-        delay(5.minutes)
         while (true) {
-            StatisticsRepository.refresh(context)
             delay(5.minutes)
+            StatisticsRepository.refresh(context)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            val nextMidnight = Calendar.getInstance().apply {
+                add(Calendar.DAY_OF_YEAR, 1)
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+
+            delay((nextMidnight - System.currentTimeMillis()).milliseconds)
+            StatisticsRepository.refresh(context)
         }
     }
 
@@ -164,7 +177,8 @@ fun NoPhoneTimerScreen() {
 
                             Text(text = day.dayOfWeek, color = TextSecondary)
 
-                            Text(text = day.noPhoneDuration.formatDuration(false),
+                            Text(
+                                text = day.noPhoneDuration.formatDuration(false),
                                 color = TextPrimary
                             )
                         }
