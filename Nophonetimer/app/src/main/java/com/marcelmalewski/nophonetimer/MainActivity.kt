@@ -3,6 +3,7 @@ package com.marcelmalewski.nophonetimer
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -20,6 +21,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -34,6 +36,7 @@ import com.marcelmalewski.nophonetimer.ui.theme.BackgroundSecondary
 import com.marcelmalewski.nophonetimer.ui.theme.NoPhoneTimerTheme
 import com.marcelmalewski.nophonetimer.ui.theme.TextPrimary
 import com.marcelmalewski.nophonetimer.ui.theme.TextSecondary
+import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -54,39 +57,43 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun NoPhoneTimerScreen() {
-
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val scope = rememberCoroutineScope()
 
     DisposableEffect(lifecycleOwner) {
-
         val observer = LifecycleEventObserver { _, event ->
-
             if (event == Lifecycle.Event.ON_RESUME) {
-                StatisticsRepository.refresh(context)
+                scope.launch {
+                    StatisticsRepository.refresh(context)
+                }
             }
         }
 
         lifecycleOwner.lifecycle.addObserver(observer)
-
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 
     LaunchedEffect(Unit) {
-
+        delay(5.minutes)
         while (true) {
-
             StatisticsRepository.refresh(context)
-
             delay(5.minutes)
         }
     }
 
     val appState by StatisticsRepository.state.collectAsState()
 
+    val start = System.currentTimeMillis()
+
     val usageGranted = hasUsageAccess(context)
+
+    Log.d(
+        "NoPhoneTimer",
+        "usage access check took ${System.currentTimeMillis() - start} ms"
+    )
 
     Box(
         modifier = Modifier
@@ -132,7 +139,7 @@ fun NoPhoneTimerScreen() {
                     Text(
                         text = appState.todayTotal.formatDuration(),
                         color = TextPrimary,
-                        fontSize = 56.sp
+                        fontSize = 40.sp
                     )
                 }
             }
@@ -150,32 +157,24 @@ fun NoPhoneTimerScreen() {
                     modifier = Modifier.padding(28.dp)
                 ) {
 
-                    Text(
-                        text = "Last 7 Days", color = Accent, fontSize = 14.sp
-                    )
+                    Text(text = "Last 7 Days", color = Accent, fontSize = 14.sp)
 
                     Spacer(modifier = Modifier.height(20.dp))
 
                     appState.history.forEach { day ->
-
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
 
-                            Text(
-                                text = day.dayOfWeek, color = TextSecondary
-                            )
+                            Text(text = day.dayOfWeek, color = TextSecondary)
 
-                            Text(
-                                text = day.noPhoneDuration.formatDuration(false),
+                            Text(text = day.noPhoneDuration.formatDuration(false),
                                 color = TextPrimary
                             )
                         }
 
-                        Spacer(
-                            modifier = Modifier.height(8.dp)
-                        )
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
             }
@@ -256,9 +255,9 @@ fun Long.formatDuration(showSeconds: Boolean = true): String {
 
             if (isNotEmpty()) {
                 append(" ")
-            } else {
-                append("${seconds}s")
             }
+
+            append("${seconds}s")
         }
     }
 }
